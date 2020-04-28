@@ -153,6 +153,35 @@ func queryPageant(buf []byte) (result []byte, err error) {
 	return
 }
 
+func queryAgent(pipeName string, buf []byte) (result []byte, err error) {
+	debug := false
+	conn, err := winio.DialPipe(pipeName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to pipe %s: %w", pipeName, err)
+	} else if debug {
+		log.Printf("Connected to %s: %d", pipeName, len(buf))
+	}
+	defer conn.Close()
+
+	l, err := conn.Write(buf)
+	if err != nil {
+		return nil, fmt.Errorf("cannot write to pipe %s: %w", pipeName, err)
+	} else if debug {
+		log.Printf("Sent to %s: %d", pipeName, l)
+	}
+
+	reader := bufio.NewReader(conn)
+	res := make([]byte, util.MaxAgentMsgLen)
+
+	l, err = reader.Read(res)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read from pipe %s: %w", pipeName, err)
+	} else if debug {
+		log.Printf("Received from %s: %d", pipeName, l)
+	}
+	return res[0:l], nil
+}
+
 var failureMessage = [...]byte{0, 0, 0, 1, 5}
 
 func handleConnection(conn net.Conn) {
