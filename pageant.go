@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"runtime"
 	"syscall"
 	"unsafe"
@@ -65,10 +66,13 @@ func WndProc(hWnd win.HWND, message uint32, wParam uintptr, lParam uintptr) uint
 		
 		fmt.Printf("wndProc COPYDATA: %+v %+v %+v \n", hWnd, wParam, lParam)
 
+		nameLength := cds.cbData//(*reflect.StringHeader)(unsafe.Pointer(uintptr(cds.cbData)))
+		name := (*reflect.StringHeader)(unsafe.Pointer(uintptr(cds.lpData)))
+
 		// copyDataStruct *fs
 		// fs = copyDataStruct (&cds)
 
-		fmt.Printf("cds: %+v",cds)
+		fmt.Printf("cds: %+v %+v %+v %+v",nameLength,name)
 		// cds := copyDataStruct{lParam}
 		return 1;
 	}	
