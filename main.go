@@ -82,7 +82,7 @@ func makeInheritSaWithSid() *windows.SecurityAttributes {
 
 }
 
-func queryPageant(buf []byte) (result []byte, err error) {
+func queryPageant_(buf []byte) (result []byte, err error) {
 	if len(buf) > agentMaxMessageLength {
 		err = errors.New("Message too long")
 		return
@@ -154,6 +154,11 @@ func queryPageant(buf []byte) (result []byte, err error) {
 }
 
 func queryAgent(pipeName string, buf []byte) (result []byte, err error) {
+	if len(buf) > agentMaxMessageLength {
+		err = errors.New("Message too long")
+		return
+	}
+
 	debug := false
 	conn, err := winio.DialPipe(pipeName, nil)
 	if err != nil {
@@ -171,7 +176,7 @@ func queryAgent(pipeName string, buf []byte) (result []byte, err error) {
 	}
 
 	reader := bufio.NewReader(conn)
-	res := make([]byte, util.MaxAgentMsgLen)
+	res := make([]byte, agentMaxMessageLength)
 
 	l, err = reader.Read(res)
 	if err != nil {
@@ -209,7 +214,8 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		result, err := queryPageant(append(lenBuf, buf...))
+		// result, err := queryPageant(append(lenBuf, buf...))
+		result, err := queryAgent("\\\\.\\pipe\\openssh-ssh-agent", append(lenBuf, buf...))
 		if err != nil {
 			// If for some reason talking to Pageant fails we fall back to
 			// sending an agent error to the client
@@ -310,6 +316,47 @@ func main() {
 			// If for some reason our listener breaks, kill the program
 			done <- true
 		}()
+	}
+
+	pageantWindowClass := `\o/ Walk_Clipboard_Class \o/`
+	var wc win.WNDCLASSEX
+	wc.CbSize = uint32(unsafe.Sizeof(wc))
+	wc.LpfnWndProc = wndProcPtr
+	wc.HInstance = hInst
+	wc.HIcon = hIcon
+	wc.HCursor = hCursor
+	wc.HbrBackground = win.COLOR_BTNFACE + 1
+	wc.LpszClassName = syscall.StringToUTF16Ptr(className)
+
+	if atom := win.RegisterClassEx(&wc); atom == 0 {
+		panic("RegisterClassEx")
+	}
+
+	// MustRegisterWindowClass(pageantWindowClass)
+	// pageantWindow := win.CreateWindowEx(0, syscall.StringToUTF16Ptr("pageantss"), nil, win.WS_CAPTION, 0, 0, 0, 0, 0, 0, 0, nil)
+	pageantWindow := win.CreateWindowEx( 0,
+		syscall.StringToUTF16Ptr(pageantWindowClass),
+		nil,
+		0,
+		0,
+		0,
+		0,
+		0,
+		win.HWND_MESSAGE,
+		0,
+		0,
+		nil)
+	if pageantWindow == 0 {
+		log.Println("Couldn't create Pageant window.")
+	}
+
+	var msg win.MSG
+	// msg.Message = win.WM_QUIT + 1 // win.WM_QUIT
+
+	for win.GetMessage(&msg, pageantWindow, 0, 0) > 0 {
+		// win.TranslateMessage(&msg)
+		// win.DispatchMessage(&msg)
+		log.Println("Received putty message")
 	}
 
 	if *namedPipe == "" && *unixSocket == "" {
