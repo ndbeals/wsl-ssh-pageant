@@ -6,12 +6,11 @@ import (
 	"syscall"
 	"unsafe"
 
-	// "github.com/Archs/go-htmlayout"
 	"github.com/lxn/win"
 )
 
 var (
-	wndClassName = "mytestingclass"
+	wndClassName = "Pageant"
 )
 
 func main() {
@@ -31,12 +30,10 @@ func WinMain(Inst win.HINSTANCE) int32 {
 	// CreateWindowEx
 	wnd := win.CreateWindowEx(win.WS_EX_APPWINDOW,
 		syscall.StringToUTF16Ptr(wndClassName),
-		nil,
-		win.WS_OVERLAPPEDWINDOW|win.WS_CLIPSIBLINGS,
-		win.CW_USEDEFAULT,
-		win.CW_USEDEFAULT,
-		win.CW_USEDEFAULT,
-		win.CW_USEDEFAULT,
+		syscall.StringToUTF16Ptr(wndClassName),
+		0,
+		0, 0,
+        0, 0,
 		0,
 		0,
 		Inst,
@@ -46,19 +43,12 @@ func WinMain(Inst win.HINSTANCE) int32 {
 		return 0
 	}
 	fmt.Println("CreateWindowEx done", wnd)
-	win.ShowWindow(wnd, win.SW_SHOW)
-	win.UpdateWindow(wnd)
-	// load file
-	// gohl.EnableDebug()
-	// if err := gohl.LoadFile(wnd, "a.html"); err != nil {
-	// 	println("LoadFile failed", err.Error())
-	// 	return 0
-	// }
+	// win.ShowWindow(wnd, win.SW_SHOW)
+	// win.UpdateWindow(wnd)
 
 	// main message loop
 	var msg win.MSG
-
-	for win.GetMessage(&msg, 0, win.WM_COPYDATA, win.WM_COPYDATA) > 0 {
+	for win.GetMessage(&msg, 0,0,0) > 0 {
 		win.TranslateMessage(&msg)
 		win.DispatchMessage(&msg)
 	}
@@ -67,6 +57,22 @@ func WinMain(Inst win.HINSTANCE) int32 {
 }
 
 func WndProc(hWnd win.HWND, message uint32, wParam uintptr, lParam uintptr) uintptr {
+	switch message {
+	case win.WM_COPYDATA:
+	{
+		// cds := unsafe.Pointer(lParam)
+		cds := (*copyDataStruct)(unsafe.Pointer(lParam))
+		
+		fmt.Printf("wndProc COPYDATA: %+v %+v %+v \n", hWnd, wParam, lParam)
+
+		// copyDataStruct *fs
+		// fs = copyDataStruct (&cds)
+
+		fmt.Printf("cds: %+v",cds)
+		// cds := copyDataStruct{lParam}
+		return 1;
+	}	
+	}
 	// ret, handled := gohl.ProcNoDefault(hWnd, message, wParam, lParam)
 	// if handled {
 	// 	return uintptr(ret)
@@ -80,22 +86,26 @@ func WndProc(hWnd win.HWND, message uint32, wParam uintptr, lParam uintptr) uint
 
 func MyRegisterClass(hInstance win.HINSTANCE) (atom win.ATOM) {
 	var wc win.WNDCLASSEX
+	wc.Style = 0
+	
+
 	wc.CbSize = uint32(unsafe.Sizeof(wc))
-	wc.Style = win.CS_HREDRAW | win.CS_VREDRAW
+	// wc.Style = win.CS_HREDRAW | win.CS_VREDRAW
 	wc.LpfnWndProc = syscall.NewCallback(WndProc)
 	wc.CbClsExtra = 0
 	wc.CbWndExtra = 0
 	wc.HInstance = hInstance
-	wc.HbrBackground = win.GetSysColorBrush(win.COLOR_WINDOWFRAME)
-	wc.LpszMenuName = syscall.StringToUTF16Ptr("")
+	wc.HIcon = win.LoadIcon(0, win.MAKEINTRESOURCE(win.IDI_APPLICATION))
+	wc.HCursor = win.LoadCursor(0, win.MAKEINTRESOURCE(win.IDC_IBEAM))
+	wc.HbrBackground = win.GetSysColorBrush(win.BLACK_BRUSH)
+	wc.LpszMenuName = nil // syscall.StringToUTF16Ptr("")
 	wc.LpszClassName = syscall.StringToUTF16Ptr(wndClassName)
 	wc.HIconSm = win.LoadIcon(0, win.MAKEINTRESOURCE(win.IDI_APPLICATION))
-	wc.HIcon = win.LoadIcon(0, win.MAKEINTRESOURCE(win.IDI_APPLICATION))
-	wc.HCursor = win.LoadCursor(0, win.MAKEINTRESOURCE(win.IDC_ARROW))
 
 	return win.RegisterClassEx(&wc)
 }
 
 func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	// runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(1)
 }

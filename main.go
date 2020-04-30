@@ -214,8 +214,8 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		// result, err := queryPageant(append(lenBuf, buf...))
-		result, err := queryAgent("\\\\.\\pipe\\openssh-ssh-agent", append(lenBuf, buf...))
+		result, err := queryPageant_(append(lenBuf, buf...))
+		// result, err := queryAgent("\\\\.\\pipe\\openssh-ssh-agent", append(lenBuf, buf...))
 		if err != nil {
 			// If for some reason talking to Pageant fails we fall back to
 			// sending an agent error to the client
@@ -253,7 +253,7 @@ func listenLoop(ln net.Listener) {
 	}
 }
 
-func main() {
+func main_() {
 	fixconsole.FixConsoleIfNeeded()
 	flag.Parse()
 
@@ -318,46 +318,46 @@ func main() {
 		}()
 	}
 
-	pageantWindowClass := `\o/ Walk_Clipboard_Class \o/`
-	var wc win.WNDCLASSEX
-	wc.CbSize = uint32(unsafe.Sizeof(wc))
-	wc.LpfnWndProc = wndProcPtr
-	wc.HInstance = hInst
-	wc.HIcon = hIcon
-	wc.HCursor = hCursor
-	wc.HbrBackground = win.COLOR_BTNFACE + 1
-	wc.LpszClassName = syscall.StringToUTF16Ptr(className)
+	// pageantWindowClass := `\o/ Walk_Clipboard_Class \o/`
+	// var wc win.WNDCLASSEX
+	// wc.CbSize = uint32(unsafe.Sizeof(wc))
+	// wc.LpfnWndProc = wndProcPtr
+	// wc.HInstance = hInst
+	// wc.HIcon = hIcon
+	// wc.HCursor = hCursor
+	// wc.HbrBackground = win.COLOR_BTNFACE + 1
+	// wc.LpszClassName = syscall.StringToUTF16Ptr(className)
 
-	if atom := win.RegisterClassEx(&wc); atom == 0 {
-		panic("RegisterClassEx")
-	}
+	// if atom := win.RegisterClassEx(&wc); atom == 0 {
+	// 	panic("RegisterClassEx")
+	// }
 
-	// MustRegisterWindowClass(pageantWindowClass)
-	// pageantWindow := win.CreateWindowEx(0, syscall.StringToUTF16Ptr("pageantss"), nil, win.WS_CAPTION, 0, 0, 0, 0, 0, 0, 0, nil)
-	pageantWindow := win.CreateWindowEx( 0,
-		syscall.StringToUTF16Ptr(pageantWindowClass),
-		nil,
-		0,
-		0,
-		0,
-		0,
-		0,
-		win.HWND_MESSAGE,
-		0,
-		0,
-		nil)
-	if pageantWindow == 0 {
-		log.Println("Couldn't create Pageant window.")
-	}
+	// // MustRegisterWindowClass(pageantWindowClass)
+	// // pageantWindow := win.CreateWindowEx(0, syscall.StringToUTF16Ptr("pageantss"), nil, win.WS_CAPTION, 0, 0, 0, 0, 0, 0, 0, nil)
+	// pageantWindow := win.CreateWindowEx( 0,
+	// 	syscall.StringToUTF16Ptr(pageantWindowClass),
+	// 	nil,
+	// 	0,
+	// 	0,
+	// 	0,
+	// 	0,
+	// 	0,
+	// 	win.HWND_MESSAGE,
+	// 	0,
+	// 	0,
+	// 	nil)
+	// if pageantWindow == 0 {
+	// 	log.Println("Couldn't create Pageant window.")
+	// }
 
-	var msg win.MSG
-	// msg.Message = win.WM_QUIT + 1 // win.WM_QUIT
+	// var msg win.MSG
+	// // msg.Message = win.WM_QUIT + 1 // win.WM_QUIT
 
-	for win.GetMessage(&msg, pageantWindow, 0, 0) > 0 {
-		// win.TranslateMessage(&msg)
-		// win.DispatchMessage(&msg)
-		log.Println("Received putty message")
-	}
+	// for win.GetMessage(&msg, pageantWindow, 0, 0) > 0 {
+	// 	// win.TranslateMessage(&msg)
+	// 	// win.DispatchMessage(&msg)
+	// 	log.Println("Received putty message")
+	// }
 
 	if *namedPipe == "" && *unixSocket == "" {
 		flag.PrintDefaults()
